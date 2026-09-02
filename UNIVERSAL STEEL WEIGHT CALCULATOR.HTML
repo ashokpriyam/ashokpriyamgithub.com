@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Material Weight Calculator with Shape Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-10 px-4">
+  <div class="max-w-5xl mx-auto bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 px-6 py-5">
+      <h1 class="text-2xl font-bold tracking-wide">Universal Weight Calculator</h1>
+      <p class="text-sm text-blue-100 opacity-90 mt-1">Multi-shape geometric weight calculator with live shape preview</p>
+    </div>
+
+    <div class="p-6 md:p-8 space-y-6">
+      
+      <!-- Selections Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Shape Selection -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Shape Profile</label>
+          <select id="shapeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 transition">
+            <option value="round_bar">Solid Cylinder / Round Bar</option>
+            <option value="pipe">Hollow Pipe / Tube</option>
+            <option value="sheet">Rectangular Plate / Sheet</option>
+            <option value="box_tube">Square / Rectangular Tube</option>
+            <option value="sphere">Solid Sphere / Ball</option>
+            <option value="hex_bar">Hexagonal Bar</option>
+            <option value="cone">Cone / Frustum</option>
+          </select>
+        </div>
+
+        <!-- Material Selection -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Material</label>
+          <select id="materialSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 transition">
+            <optgroup label="Ferrous Metals">
+              <option value="7.85">Mild Steel / Carbon Steel (7.85 g/cm³)</option>
+              <option value="7.93">Stainless Steel 304 (7.93 g/cm³)</option>
+              <option value="8.00">Stainless Steel 316 (8.00 g/cm³)</option>
+              <option value="7.20">Cast Iron (7.20 g/cm³)</option>
+              <option value="7.80">Tool Steel (7.80 g/cm³)</option>
+            </optgroup>
+            <optgroup label="Non-Ferrous Metals">
+              <option value="2.70">Aluminium 6061 (2.70 g/cm³)</option>
+              <option value="8.50">Brass (8.50 g/cm³)</option>
+              <option value="8.96">Copper (8.96 g/cm³)</option>
+              <option value="8.80">Bronze (8.80 g/cm³)</option>
+              <option value="4.43">Titanium Gr5 (4.43 g/cm³)</option>
+              <option value="11.34">Lead (11.34 g/cm³)</option>
+              <option value="19.32">Gold (19.32 g/cm³)</option>
+            </optgroup>
+            <optgroup label="Polymers & Plastics">
+              <option value="1.14">Nylon PA6 (1.14 g/cm³)</option>
+              <option value="1.42">Delrin / POM (1.42 g/cm³)</option>
+              <option value="2.20">PTFE / Teflon (2.20 g/cm³)</option>
+              <option value="1.40">PVC (1.40 g/cm³)</option>
+              <option value="0.95">HDPE (0.95 g/cm³)</option>
+              <option value="1.20">Polycarbonate (1.20 g/cm³)</option>
+            </optgroup>
+            <optgroup label="Others">
+              <option value="2.50">Glass (2.50 g/cm³)</option>
+              <option value="2.40">Concrete (2.40 g/cm³)</option>
+              <option value="0.65">Teak Wood (0.65 g/cm³)</option>
+              <option value="custom">Custom Density...</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Dimension Unit -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Input Unit</label>
+          <select id="unitSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 transition">
+            <option value="mm">Millimeters (mm)</option>
+            <option value="cm">Centimeters (cm)</option>
+            <option value="m">Meters (m)</option>
+            <option value="in">Inches (in)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom Density Input -->
+      <div id="customDensityContainer" class="hidden">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-2">Custom Density (g/cm³)</label>
+        <input type="number" id="customDensityInput" step="any" min="0.0001" placeholder="Enter density, e.g. 1.25" class="w-full md:w-1/3 bg-slate-900 border border-amber-500/50 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-400">
+      </div>
+
+      <hr class="border-slate-700">
+
+      <!-- Middle Section: Dimensions on Left, Shape Visual on Right -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        
+        <!-- Dimensions Column -->
+        <div class="lg:col-span-7 space-y-4">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Dimensions & Quantity</h2>
+          <div id="fieldsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Dynamic Fields -->
+          </div>
+        </div>
+
+        <!-- Shape Preview SVG Box -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-4 flex flex-col items-center justify-center min-h-[240px]">
+          <span class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">Geometric Shape Preview</span>
+          <div id="shapeVisualContainer" class="w-full flex items-center justify-center py-2">
+            <!-- Dynamic SVG will be rendered here -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Results Card -->
+      <div class="bg-slate-900/80 border border-slate-700/80 rounded-xl p-5 mt-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          
+          <div class="p-3 bg-slate-800/60 rounded-lg border border-slate-700">
+            <span class="block text-xs text-slate-400 font-medium">Single Volume</span>
+            <span id="volOutput" class="text-lg md:text-xl font-bold text-blue-400 mt-1 block">0 cm³</span>
+          </div>
+
+          <div class="p-3 bg-slate-800/60 rounded-lg border border-slate-700">
+            <span class="block text-xs text-slate-400 font-medium">Total Kilograms</span>
+            <span id="kgOutput" class="text-xl md:text-2xl font-black text-emerald-400 mt-1 block">0.000 kg</span>
+          </div>
+
+          <div class="p-3 bg-slate-800/60 rounded-lg border border-slate-700">
+            <span class="block text-xs text-slate-400 font-medium">Total Pounds</span>
+            <span id="lbsOutput" class="text-lg md:text-xl font-bold text-slate-200 mt-1 block">0.000 lbs</span>
+          </div>
+
+          <div class="p-3 bg-slate-800/60 rounded-lg border border-slate-700">
+            <span class="block text-xs text-slate-400 font-medium">Metric Tons</span>
+            <span id="tonOutput" class="text-lg md:text-xl font-bold text-slate-200 mt-1 block">0.0000 MT</span>
+          </div>
+
+        </div>
+
+        <div id="errorBox" class="hidden mt-4 p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 text-xs text-center font-medium"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const shapeSelect = document.getElementById('shapeSelect');
+    const materialSelect = document.getElementById('materialSelect');
+    const unitSelect = document.getElementById('unitSelect');
+    const customDensityContainer = document.getElementById('customDensityContainer');
+    const customDensityInput = document.getElementById('customDensityInput');
+    const fieldsContainer = document.getElementById('fieldsContainer');
+    const errorBox = document.getElementById('errorBox');
+    const shapeVisualContainer = document.getElementById('shapeVisualContainer');
+
+    const shapeFields = {
+      round_bar: [
+        { id: 'd', label: 'Diameter (d)' },
+        { id: 'l', label: 'Length (L)' }
+      ],
+      pipe: [
+        { id: 'od', label: 'Outer Diameter (OD)' },
+        { id: 'thk', label: 'Wall Thickness (t)' },
+        { id: 'l', label: 'Length (L)' }
+      ],
+      sheet: [
+        { id: 'l', label: 'Length (L)' },
+        { id: 'w', label: 'Width (W)' },
+        { id: 't', label: 'Thickness (T)' }
+      ],
+      box_tube: [
+        { id: 'w', label: 'Outer Width (W)' },
+        { id: 'h', label: 'Outer Height (H)' },
+        { id: 't', label: 'Wall Thickness (t)' },
+        { id: 'l', label: 'Length (L)' }
+      ],
+      sphere: [
+        { id: 'd', label: 'Diameter (d)' }
+      ],
+      hex_bar: [
+        { id: 's', label: 'Flat-to-Flat Width (S)' },
+        { id: 'l', label: 'Length (L)' }
+      ],
+      cone: [
+        { id: 'r1', label: 'Base Radius (R1)' },
+        { id: 'r2', label: 'Top Radius (R2, 0 for sharp cone)' },
+        { id: 'h', label: 'Height (H)' }
+      ]
+    };
+
+    // Vector SVGs with labels for each shape
+    const shapeSVGs = {
+      round_bar: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-cyan-400 stroke-current fill-none stroke-[2]">
+          <path d="M 60 30 L 220 30" stroke-dasharray="none" />
+          <path d="M 60 110 L 220 110" />
+          <ellipse cx="220" cy="70" rx="18" ry="40" fill="rgba(56, 189, 248, 0.15)" />
+          <path d="M 60 30 A 18 40 0 0 0 60 110" />
+          <path d="M 60 30 A 18 40 0 0 1 60 110" stroke-dasharray="3 3" opacity="0.6"/>
+          <!-- Dimension markers -->
+          <text x="140" y="24" fill="#94a3b8" font-size="11" text-anchor="middle" stroke="none">Length (L)</text>
+          <text x="32" y="74" fill="#94a3b8" font-size="11" text-anchor="middle" stroke="none">Dia (d)</text>
+          <line x1="45" y1="30" x2="45" y2="110" stroke="#64748b" stroke-width="1" marker-start="url(#dot)" marker-end="url(#dot)" />
+        </svg>`,
+      pipe: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-blue-400 stroke-current fill-none stroke-[2]">
+          <path d="M 50 25 L 210 25" />
+          <path d="M 50 115 L 210 115" />
+          <ellipse cx="210" cy="70" rx="20" ry="45" fill="rgba(96, 165, 250, 0.1)" />
+          <ellipse cx="210" cy="70" rx="12" ry="27" fill="#0f172a" />
+          <path d="M 50 25 A 20 45 0 0 0 50 115" />
+          <ellipse cx="50" cy="70" rx="12" ry="27" stroke-dasharray="3 3" opacity="0.6" />
+          <text x="130" y="20" fill="#94a3b8" font-size="11" text-anchor="middle" stroke="none">Length (L)</text>
+          <text x="250" y="74" fill="#94a3b8" font-size="10" text-anchor="middle" stroke="none">OD & Thickness (t)</text>
+        </svg>`,
+      sheet: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-indigo-400 stroke-current fill-none stroke-[2]">
+          <polygon points="40,80 150,110 240,65 130,35" fill="rgba(129, 140, 248, 0.15)" />
+          <polygon points="40,80 150,110 150,120 40,90" fill="rgba(99, 102, 241, 0.3)" />
+          <polygon points="150,110 240,65 240,75 150,120" fill="rgba(79, 70, 229, 0.4)" />
+          <text x="85" y="105" fill="#94a3b8" font-size="11" stroke="none">Length (L)</text>
+          <text x="195" y="95" fill="#94a3b8" font-size="11" stroke="none">Width (W)</text>
+          <text x="248" y="75" fill="#94a3b8" font-size="10" stroke="none">T</text>
+        </svg>`,
+      box_tube: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-emerald-400 stroke-current fill-none stroke-[2]">
+          <polygon points="50,40 100,20 100,100 50,120" fill="rgba(52, 211, 153, 0.15)" />
+          <polygon points="62,48 88,38 88,92 62,102" fill="#0f172a" />
+          <polygon points="100,20 220,40 220,105 100,100" fill="rgba(52, 211, 153, 0.08)" />
+          <text x="35" y="80" fill="#94a3b8" font-size="11" stroke="none">H</text>
+          <text x="75" y="130" fill="#94a3b8" font-size="11" stroke="none">W</text>
+          <text x="160" y="80" fill="#94a3b8" font-size="11" stroke="none">Length (L)</text>
+        </svg>`,
+      sphere: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-amber-400 stroke-current fill-none stroke-[2]">
+          <circle cx="140" cy="70" r="50" fill="rgba(251, 191, 36, 0.12)" />
+          <ellipse cx="140" cy="70" rx="50" ry="18" stroke-dasharray="3 3" opacity="0.6" />
+          <line x1="90" y1="70" x2="190" y2="70" stroke="#cbd5e1" stroke-width="1.5" />
+          <text x="140" y="62" fill="#cbd5e1" font-size="11" text-anchor="middle" stroke="none">Diameter (d)</text>
+        </svg>`,
+      hex_bar: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-teal-400 stroke-current fill-none stroke-[2]">
+          <!-- Front Hexagon -->
+          <polygon points="60,40 85,30 100,50 90,80 65,90 50,70" fill="rgba(45, 212, 191, 0.2)" />
+          <!-- Extrusion lines -->
+          <line x1="85" y1="30" x2="205" y2="45" />
+          <line x1="100" y1="50" x2="220" y2="65" />
+          <line x1="90" y1="80" x2="210" y2="95" />
+          <line x1="65" y1="90" x2="185" y2="105" />
+          <polygon points="180,55 205,45 220,65 210,95 185,105 170,85" fill="rgba(45, 212, 191, 0.1)" />
+          <text x="50" y="108" fill="#94a3b8" font-size="10" stroke="none">Width (S)</text>
+          <text x="150" y="65" fill="#94a3b8" font-size="11" stroke="none">Length (L)</text>
+        </svg>`,
+      cone: `
+        <svg viewBox="0 0 280 140" class="w-full max-w-[240px] text-rose-400 stroke-current fill-none stroke-[2]">
+          <ellipse cx="140" cy="115" rx="60" ry="18" fill="rgba(251, 113, 133, 0.15)" />
+          <ellipse cx="140" cy="35" rx="20" ry="7" fill="rgba(251, 113, 133, 0.3)" />
+          <line x1="80" y1="115" x2="120" y2="35" />
+          <line x1="200" y1="115" x2="160" y2="35" />
+          <line x1="140" y1="35" x2="140" y2="115" stroke="#94a3b8" stroke-dasharray="2 2" stroke-width="1.5" />
+          <text x="150" y="75" fill="#94a3b8" font-size="11" stroke="none">Height (H)</text>
+          <text x="140" y="23" fill="#94a3b8" font-size="10" text-anchor="middle" stroke="none">Top (R2)</text>
+          <text x="140" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" stroke="none">Base (R1)</text>
+        </svg>`
+    };
+
+    function renderFields() {
+      const shape = shapeSelect.value;
+      const unit = unitSelect.value;
+      const fields = shapeFields[shape] || [];
+
+      // Update Shape SVG
+      shapeVisualContainer.innerHTML = shapeSVGs[shape] || '';
+
+      // Update Input Fields
+      let html = '';
+      fields.forEach(f => {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">${f.label} (${unit})</label>
+            <input type="number" id="${f.id}" step="any" min="0" placeholder="0" class="shape-dim w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-blue-500">
+          </div>
+        `;
+      });
+
+      html += `
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Quantity (pcs)</label>
+          <input type="number" id="qty" min="1" value="1" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-blue-500">
+        </div>
+      `;
+
+      fieldsContainer.innerHTML = html;
+
+      document.querySelectorAll('.shape-dim, #qty').forEach(el => {
+        el.addEventListener('input', calculate);
+      });
+
+      calculate();
+    }
+
+    function toCm(value, unit) {
+      if (unit === 'mm') return value / 10;
+      if (unit === 'cm') return value;
+      if (unit === 'm') return value * 100;
+      if (unit === 'in') return value * 2.54;
+      return value;
+    }
+
+    function calculate() {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+
+      const shape = shapeSelect.value;
+      const unit = unitSelect.value;
+      const qty = Math.max(1, parseInt(document.getElementById('qty')?.value || 1));
+
+      // Density in g/cm³
+      let density = 0;
+      if (materialSelect.value === 'custom') {
+        customDensityContainer.classList.remove('hidden');
+        density = parseFloat(customDensityInput.value) || 0;
+      } else {
+        customDensityContainer.classList.add('hidden');
+        density = parseFloat(materialSelect.value);
+      }
+
+      const getVal = (id) => toCm(parseFloat(document.getElementById(id)?.value) || 0, unit);
+      let volumeCm3 = 0;
+
+      try {
+        if (shape === 'round_bar') {
+          const d = getVal('d');
+          const l = getVal('l');
+          const r = d / 2;
+          volumeCm3 = Math.PI * Math.pow(r, 2) * l;
+        } 
+        else if (shape === 'pipe') {
+          const od = getVal('od');
+          const thk = getVal('thk');
+          const l = getVal('l');
+          if (thk * 2 >= od && od > 0) throw new Error("Thickness must be less than half of Outer Diameter");
+          const rOut = od / 2;
+          const rIn = Math.max(0, rOut - thk);
+          volumeCm3 = Math.PI * (Math.pow(rOut, 2) - Math.pow(rIn, 2)) * l;
+        } 
+        else if (shape === 'sheet') {
+          const l = getVal('l');
+          const w = getVal('w');
+          const t = getVal('t');
+          volumeCm3 = l * w * t;
+        } 
+        else if (shape === 'box_tube') {
+          const w = getVal('w');
+          const h = getVal('h');
+          const t = getVal('t');
+          const l = getVal('l');
+          if ((t * 2 >= w || t * 2 >= h) && w > 0 && h > 0) throw new Error("Thickness is too large for outer dimensions");
+          const innerW = Math.max(0, w - (2 * t));
+          const innerH = Math.max(0, h - (2 * t));
+          volumeCm3 = ((w * h) - (innerW * innerH)) * l;
+        } 
+        else if (shape === 'sphere') {
+          const d = getVal('d');
+          const r = d / 2;
+          volumeCm3 = (4 / 3) * Math.PI * Math.pow(r, 3);
+        } 
+        else if (shape === 'hex_bar') {
+          const s = getVal('s');
+          const l = getVal('l');
+          volumeCm3 = (Math.sqrt(3) / 2) * Math.pow(s, 2) * l;
+        } 
+        else if (shape === 'cone') {
+          const r1 = getVal('r1');
+          const r2 = getVal('r2');
+          const h = getVal('h');
+          volumeCm3 = (1 / 3) * Math.PI * h * (Math.pow(r1, 2) + Math.pow(r2, 2) + (r1 * r2));
+        }
+
+        // Calculations
+        const totalVolume = volumeCm3 * qty;
+        const totalWeightGrams = totalVolume * density;
+        const totalKg = totalWeightGrams / 1000;
+        const totalLbs = totalKg * 2.20462;
+        const totalMT = totalKg / 1000;
+
+        // Render Outputs
+        document.getElementById('volOutput').textContent = volumeCm3 > 0 ? `${volumeCm3.toFixed(2)} cm³` : '0 cm³';
+        document.getElementById('kgOutput').textContent = `${totalKg.toFixed(3)} kg`;
+        document.getElementById('lbsOutput').textContent = `${totalLbs.toFixed(3)} lbs`;
+        document.getElementById('tonOutput').textContent = `${totalMT.toFixed(5)} MT`;
+
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    shapeSelect.addEventListener('change', renderFields);
+    unitSelect.addEventListener('change', renderFields);
+    materialSelect.addEventListener('change', calculate);
+    customDensityInput.addEventListener('input', calculate);
+
+    // Initial render
+    renderFields();
+  </script>
+</body>
+</html>
